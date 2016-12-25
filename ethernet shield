@@ -1,1 +1,991 @@
 
+#include <SPI.h>  //Importamos librería comunicación SPI
+
+#include <Ethernet.h>  //Importamos librería Ethernet
+
+#include <EEPROM.h>
+
+
+
+byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };//Ponemos la dirección MAC de la Ethernet Shield que está con una etiqueta debajo la placa
+
+IPAddress ip(192,168,1,100); //Asingamos la IP al Arduino
+
+EthernetServer server(2560); //Creamos un servidor Web con el puerto 80 que es el puerto HTTP por defecto
+
+//creamos variables para la temperatura ambiente y el termostato
+float tempideal=22;
+float temperatura;
+
+//Designamos nombre y numero a los pines.
+
+int pin2=2;
+
+int pin3=3;
+
+int pin4=4;
+
+int pin5=5;
+
+int pin6=6;
+
+int pin7=7;
+
+int pin8=8;
+
+int pin9=9;
+
+
+
+int value2;
+
+int value3;
+
+int value4;
+
+int value5;
+
+int value6;
+
+int value7;
+
+int value8;
+
+int value9;
+
+
+
+//Estado del Led inicialmente 
+
+String estado2="APAGADA";
+
+String estado3="APAGADO";
+
+String estado4="APAGADA";
+
+String estado5="RECOGIDO";
+
+String estado6="CERRADA";
+
+String estado7="APAGADO";
+
+String estado8="DESCONECTADO";
+
+String estado9="DESCCONECTADO";
+
+String estado10="15c";
+
+String estado11="20";
+
+String estado12="22c";
+
+void setup()
+
+{
+
+  Serial.begin(9600);
+
+
+
+  // Inicializamos la comunicación Ethernet y el servidor
+
+  Ethernet.begin(mac, ip);
+
+  server.begin();
+
+  Serial.print("server is at ");
+
+  Serial.println(Ethernet.localIP());
+
+
+
+  pinMode(pin2,OUTPUT);
+
+  pinMode(pin3,OUTPUT);
+
+  pinMode(pin4,OUTPUT);
+
+  pinMode(pin5,OUTPUT);
+
+  pinMode(pin6,OUTPUT);
+
+  pinMode(pin7,OUTPUT);
+
+  pinMode(pin8,OUTPUT);
+
+  pinMode(pin9,OUTPUT);
+
+
+
+  value2=EEPROM.read(2);
+
+  value3=EEPROM.read(3);
+
+  value4=EEPROM.read(4);
+
+  value5=EEPROM.read(5);
+
+  value6=EEPROM.read(6);
+
+  value7=EEPROM.read(7);
+
+  value8=EEPROM.read(8);
+
+  value9=EEPROM.read(9);
+
+  //PIN2
+
+  if(value2==1)
+
+  {
+
+    digitalWrite(pin2,HIGH);
+
+  }
+
+  if(value2==0)
+
+  {
+
+    digitalWrite(pin2,LOW);
+
+  }
+
+  //PIN3
+
+  if(value3==1)
+
+  {
+
+    digitalWrite(pin3,HIGH);
+
+  }
+
+  if(value3==0)
+
+  {
+
+    digitalWrite(pin3,LOW);
+
+  }
+
+  //PIN4
+
+  if(value4==1)
+
+  {
+
+    digitalWrite(pin4,HIGH);
+
+  }
+
+  if(value4==0)
+
+  {
+
+    digitalWrite(pin4,LOW);
+
+  }
+
+  //PIN5
+
+  if(value5==1)
+
+  {
+
+    digitalWrite(pin5,HIGH);
+
+  }
+
+  if(value5==0)
+
+  {
+
+    digitalWrite(pin5,LOW);
+
+  }
+
+  //PIN6
+
+  if(value6==1)
+
+  {
+
+    digitalWrite(pin6,HIGH);
+
+  }
+
+  if(value6==0)
+
+  {
+
+    digitalWrite(pin6,LOW);
+
+  }
+
+  //PIN7
+
+  if(value7==1)
+
+  {
+
+    digitalWrite(pin7,HIGH);
+
+  }
+
+  if(value7==0)
+
+  {
+
+    digitalWrite(pin7,LOW);
+
+  }
+
+  //PIN8
+
+  if(value8==1)
+
+  {
+
+    digitalWrite(pin8,HIGH);
+
+  }
+
+  if(value8==0)
+
+  {
+
+    digitalWrite(pin8,LOW);
+
+  }
+
+  //PIN9
+
+  if(value9==1)
+
+  {
+
+    digitalWrite(pin9,HIGH);
+
+  }
+
+  if(value9==0)
+
+  {
+
+    digitalWrite(pin9,LOW);
+
+  }
+
+
+
+}
+
+
+
+void loop()
+
+{
+float temp1 = analogRead(3);
+delay(50);
+
+float temp2 = analogRead(3);
+delay(50);
+
+float temp3 = analogRead(3);
+delay(50);
+
+float temp4 = analogRead(3);
+delay(50);
+
+float temp5 = analogRead(3);
+delay(50);
+
+temperatura = (temp1 + temp2 + temp3 + temp4 + temp5) / 5 ;
+    temperatura = 5.0*temperatura*100.0/1024.0;
+    
+    Serial.print(temperatura);
+    Serial.println(" oC");
+    delay(1000);
+    pinMode(14,OUTPUT);
+    
+    if(temperatura < tempideal)
+    {
+    digitalWrite(14,HIGH);
+  }
+  
+    if(temperatura > tempideal)
+    {
+      digitalWrite(14,LOW);
+  }  
+
+
+
+
+  EthernetClient client = server.available(); //Creamos un cliente Web
+
+  //Cuando detecte un cliente a través de una petición HTTP
+
+  if (client) {
+
+    Serial.println("new client");
+
+    boolean currentLineIsBlank = true; //Una petición HTTP acaba con una línea en blanco
+
+    String cadena=""; //Creamos una cadena de caracteres vacía
+
+    while (client.connected()) {
+
+      if (client.available()) {
+
+        char c = client.read();//Leemos la petición HTTP carácter por carácter
+
+        Serial.write(c);//Visualizamos la petición HTTP por el Monitor Serial
+
+        cadena.concat(c);//Unimos el String 'cadena' con la petición HTTP (c). De esta manera convertimos la petición HTTP a un String
+
+
+
+        //Ya que hemos convertido la petición HTTP a una cadena de caracteres, ahora podremos buscar partes del texto.
+
+        int posicion=cadena.indexOf("ORDEN="); //Guardamos la posición de la instancia "LED=" a la variable 'posicion'
+
+
+
+        //Actuamos con el pin dos CALEFACCION
+
+        if(cadena.substring(posicion)=="ORDEN=ON2")//Si a la posición 'posicion' hay "LED=ON"
+
+        {
+
+          EEPROM.write(2,1);
+
+          digitalWrite(pin2,HIGH);
+
+          estado2="ENCENDIDA";
+
+        }
+
+        if(cadena.substring(posicion)=="ORDEN=OFF2")//Si a la posición 'posicion' hay "LED=OFF"
+
+        {
+
+          EEPROM.write(2,0);
+
+          digitalWrite(pin2,LOW);
+
+          estado2="APAGADA";
+
+        }
+
+
+
+        //Actuamos con el pin tres AIRE ACOND.
+
+        if(cadena.substring(posicion)=="ORDEN=ON3")//Si a la posición 'posicion' hay "LED=ON"
+
+        {
+
+          EEPROM.write(3,1);
+
+          digitalWrite(pin3,HIGH);
+
+          estado3="ENCENDIDO";
+
+        }
+
+        if(cadena.substring(posicion)=="ORDEN=OFF3")//Si a la posición 'posicion' hay "LED=OFF"
+
+        {
+
+          EEPROM.write(3,0);
+
+          digitalWrite(pin3,LOW);
+
+          estado3="APAGADO";
+
+        }
+
+
+
+        //Actuamos con el pin cuatro LUZ
+
+        if(cadena.substring(posicion)=="ORDEN=ON4")//Si a la posición 'posicion' hay "LED=ON"
+
+        {
+
+          EEPROM.write(4,1);
+
+          digitalWrite(pin4,HIGH);
+
+          estado4="ENCENDIDA";
+
+        }
+
+        if(cadena.substring(posicion)=="ORDEN=OFF4")//Si a la posición 'posicion' hay "LED=OFF"
+
+        {
+
+          EEPROM.write(4,0);
+
+          digitalWrite(pin4,LOW);
+
+          estado4="APAGADA";
+
+        }
+
+
+
+        //Actuamos con el pin cinco TOLDO
+
+        if(cadena.substring(posicion)=="ORDEN=ON5")//Si a la posición 'posicion' hay "LED=ON"
+
+        {
+
+          EEPROM.write(5,1);
+
+          digitalWrite(pin5,HIGH);
+
+          estado5="SACADO";
+
+        }
+
+        if(cadena.substring(posicion)=="ORDEN=OFF5")//Si a la posición 'posicion' hay "LED=OFF"
+
+        {
+
+          EEPROM.write(5,0);
+
+          digitalWrite(pin5,LOW);
+
+          estado5="RECOGIDO";
+
+        }
+
+
+
+        //Actuamos con el pin seis PUERTA GARAJE
+
+        if(cadena.substring(posicion)=="ORDEN=ON6")//Si a la posición 'posicion' hay "LED=ON"
+
+        {
+
+          EEPROM.write(6,1);
+
+          digitalWrite(pin6,HIGH);
+
+          estado6="ABIERTA";
+
+        }
+
+        if(cadena.substring(posicion)=="ORDEN=OFF6")//Si a la posición 'posicion' hay "LED=OFF"
+
+        {
+          EEPROM.write(6,0);
+
+          digitalWrite(pin6,LOW);
+
+          estado6="CERRADA";
+
+        }
+
+
+
+        //Actuamos con el pin siete RIEGO
+
+        if(cadena.substring(posicion)=="ORDEN=ON7")//Si a la posición 'posicion' hay "LED=ON"
+
+        {
+          EEPROM.write(7,1);
+
+          digitalWrite(pin7,HIGH);
+
+          estado7="ENCENDIDO";
+
+        }
+
+        if(cadena.substring(posicion)=="ORDEN=OFF7")//Si a la posición 'posicion' hay "LED=OFF"
+
+        {
+
+          EEPROM.write(7,0);
+
+          digitalWrite(pin7,LOW);
+
+          estado7="APAGADO";
+
+        }
+
+
+
+        //Actuamos con el pin ocho AUX1
+
+        if(cadena.substring(posicion)=="ORDEN=ON8")//Si a la posición 'posicion' hay "LED=ON"
+
+        {
+
+          EEPROM.write(8,1);
+
+          digitalWrite(pin8,HIGH);
+
+          estado8="CONECTADO";
+
+        }
+
+        if(cadena.substring(posicion)=="ORDEN=OFF8")//Si a la posición 'posicion' hay "LED=OFF"
+
+        {
+
+          EEPROM.write(8,0);
+
+          digitalWrite(pin8,LOW);
+
+          estado8="DESCONECTADO";
+
+        }
+
+
+
+        //Actuamos con el pin nueve AUX2
+
+        if(cadena.substring(posicion)=="ORDEN=ON9")//Si a la posición 'posicion' hay "LED=ON"
+
+        {
+
+          EEPROM.write(9,1);
+
+          digitalWrite(pin9,HIGH);
+
+          estado9="CONECTADO";
+
+        }
+        
+        if(cadena.substring(posicion)=="ORDEN=OFF9")//Si a la posición 'posicion' hay "LED=OFF"
+
+        {
+
+          EEPROM.write(9,0);
+
+          digitalWrite(pin9,LOW);
+
+          estado9="DESCONECTADO";
+
+        }
+        
+        
+        //establecemos la temperatura en 15 grados
+        
+         if(cadena.substring(posicion)=="ORDEN=15")
+           
+           {
+             EEPROM.write(10,15);
+             
+            tempideal=15;
+            
+            estado10="15c";
+          }
+          
+          
+          //establecemos la temperatura en 20 grados
+          
+          if(cadena.substring(posicion)=="ORDEN=20")
+           
+           {
+            EEPROM.write(11,20);
+            
+            tempideal=20;
+            
+            estado10="20";
+         
+          }
+          
+          
+          //establecemos la temperatura en 22 grados
+          
+           if(cadena.substring(posicion)=="ORDEN=24")
+           
+           {
+            EEPROM.write(12,24);
+            
+            tempideal=24;
+            
+            estado10="24";
+            
+          }
+
+
+
+
+
+
+        //Cuando reciba una línea en blanco, quiere decir que la petición HTTP ha acabado y el servidor Web está listo para enviar una respuesta
+
+        if (c == '\n' && currentLineIsBlank) {
+
+
+
+          // Enviamos al cliente una respuesta HTTP
+
+          client.println("HTTP/1.1 200 OK");
+
+          client.println("Content-Type: text/html");
+
+          client.println();
+
+
+
+          //Página web en formato HTML
+
+          client.println("<html>");
+
+
+
+          client.println("<head>");
+          
+          client.println("<meta http-equiv=Refresh content=5;");
+
+          client.println("</head>");
+
+          client.println("<body>");
+
+          client.println("<BODY BGCOLOR=#3AA9E4>");
+
+          client.println("<DIV ALIGN=right></DIV>");
+
+          client.println("<H1><center>TEST 1  REMOTE CONTROL HOME   @rubensist</center></H1>");
+
+
+
+
+
+          client.println("<br>");
+
+          client.println("<input type='button' onClick=location.href='./?ORDEN=ON2\'  name='boton' value='ON'       style='width:150px;     height:50px ;background:#18C70C ;position:absolute;left:220;top:70; '>");
+
+          client.println("<input type='button' onClick=location.href='./?ORDEN=OFF2\'  name='boton' value='OFF'      style='width:150px;     height:50px ;background:#F31010 ;position:absolute;left: 415;top:70; '>");
+          
+          
+          client.println("<input type='button' onClick=location.href='./?ORDEN=15\'  name='boton' value='15c'       style='width:50px;     height:50px ;background:#F0116FA ;position:absolute;left:750;top:70; '>");
+
+          client.println("<input type='button' onClick=location.href='./?ORDEN=20\'  name='boton' value='20c'      style='width:50px;     height:50px ;background:#F0116FA ;position:absolute;left: 850;top:70; '>");
+          
+          client.println("<input type='button' onClick=location.href='./?ORDEN=24\'  name='boton' value='24c'      style='width:50px;     height:50px ;background:#F0116FA ;position:absolute;left: 950;top:70; '>");
+
+          
+          client.println("<input type='button' onClick=location.href='./?ORDEN=ON3\'  name='boton' value='ON'       style='width:150px;     height:50px ;background:#18C70C ;position:absolute;left:220;top:140; '>");
+
+          client.println("<input type='button' onClick=location.href='./?ORDEN=OFF3\'  name='boton' value='OFF'      style='width:150px;     height:50px ;background:#F31010 ;position:absolute;left:415;top:140; '>");
+
+
+
+          client.println("<input type='button' onClick=location.href='./?ORDEN=ON4\'  name='boton' value='ON'       style='width:150px;     height:50px ;background:#18C70C ;position:absolute;left:220;top:215; '>");
+
+          client.println("<input type='button' onClick=location.href='./?ORDEN=OFF4\'  name='boton' value='OFF'      style='width:150px;     height:50px ;background:#F31010 ;position:absolute;left:415;top:215; '>");
+
+
+
+          client.println("<input type='button' onClick=location.href='./?ORDEN=ON5\'  name='boton' value='EXTENDER' style='width:150px;     height:50px ;background:#18C70C ;position:absolute;left:220;top:285; '>");
+
+          client.println("<input type='button' onClick=location.href='./?ORDEN=OFF5\'  name='boton' value='RECOGER'  style='width:150px;     height:50px ;background:#F31010 ;position:absolute;left:415;top:285; '>");
+
+
+
+          client.println("<input type='button' onClick=location.href='./?ORDEN=ON6\'  name='boton' value='ABRIR'    style='width:150px;     height:50px ;background:#18C70C ;position:absolute;left:220;top:355; '>");
+
+          client.println("<input type='button' onClick=location.href='./?ORDEN=OFF6\'  name='boton' value='CERRAR'   style='width:150px;     height:50px ;background:#F31010 ;position:absolute;left:415;top:355; '>");
+
+
+
+          client.println("<input type='button' onClick=location.href='./?ORDEN=ON7\'  name='boton' value='ON'       style='width:150px;     height:50px ;background:#18C70C ;position:absolute;left: 220;top:425; '>");
+
+          client.println("<input type='button' onClick=location.href='./?ORDEN=OFF7\'  name='boton' value='OFF'      style='width:150px;     height:50px ;background:#F31010 ;position:absolute;left: 415;top:425; '>");
+
+
+
+          client.println("<input type='button' onClick=location.href='./?ORDEN=ON8\'  name='boton' value='ON'       style='width:150px;     height:50px ;background:#18C70C ;position:absolute;left: 220;top:495; '>");
+
+          client.println("<input type='button' onClick=location.href='./?ORDEN=OFF8\'  name='boton' value='OFF'      style='width:150px;     height:50px ;background:#F31010 ;position:absolute;left: 415;top:495; '>");
+
+
+
+          client.println("<input type='button' onClick=location.href='./?ORDEN=ON9\'  name='boton' value='ON'       style='width:150px;     height:50px ;background:#18C70C ;position:absolute;left: 220;top:565; '>");
+
+          client.println("<input type='button' onClick=location.href='./?ORDEN=OFF9\'  name='boton' value='OFF'      style='width:150px;     height:50px ;background:#F31010 ;position:absolute;left: 415;top:565; '>");
+
+          client.println("</b>");
+
+
+
+
+
+          //CALEFACCION, PIN 2, ESTDADO 2
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>CALEFACCION</b>");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.print(estado2);
+          
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+          
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+
+
+          client.println ("Termostato=");
+
+          client.println (estado10);
+          
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;");
+          
+          client.println ("Temp.ambiente=");
+          
+          client.println (temperatura);
+
+          
+
+
+          //AIRE ACON., PIN 3, ESTADO 3
+
+          client.println("<br><br><br><br>");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>AIRE ACOND.</b>");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.print(estado3);
+
+
+
+
+
+          //LUZ, PIN 4, ESTADO 4
+
+          client.println("<br><br><br><br>");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>LUZ</b>");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.print(estado4);
+
+
+
+          //TOLDO, PIN 5, ESTADO 5
+
+          client.println("<br><br><br><br>");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>TOLDO</b>");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+         
+
+          client.print(estado5);
+
+
+
+          //PUERTA GARAJE, PIN 6, ESTADO 6
+
+          client.println("<br><br><br><br>");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>PUERTA GARAJE</b>");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.print(estado6);
+
+
+
+
+
+          //RIEGO, PIN 7, ESTADO 7
+
+          client.println("<br><br><br><br>");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>RIEGO</b>");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.print(estado7);
+
+
+
+
+
+          //AUX.1, PIN 8, ESTADO 8
+
+          client.println("<br><br><br><br>");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>AUX.1</b>");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.print(estado8);
+
+
+
+
+
+          //AUX.2, PIN 9, ESTADO 9
+
+          client.println("<br><br><br><br>");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>AUX.2</b>");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.println ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+
+          client.print(estado9);
+
+
+
+
+
+
+
+          client.println("</body>");
+
+          client.println("</html>");
+
+          break;
+
+        }
+
+        if (c == '\n') {
+
+          currentLineIsBlank = true;
+
+        }
+
+        else if (c != '\r') {
+
+          currentLineIsBlank = false;
+
+        }
+
+      }
+
+    }
+
+    //Dar tiempo al navegador para recibir los datos
+
+    delay(1);
+
+    client.stop();// Cierra la conexión
+
+  }
+
+}
+
